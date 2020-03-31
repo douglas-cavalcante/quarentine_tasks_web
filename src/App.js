@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+import axios from "axios";
 
 import Header from "./components/Header";
 import { Content, Form } from "./styles";
@@ -8,149 +10,73 @@ import Button from "./components/Button";
 import Section from "./components/Section";
 
 function App() {
-  const [task, setTask] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [tasks, setTasks] = useState({
+    completed: [],
+    canceled: [],
+    pending: []
+  });
+
+  async function getTasks() {
+    await axios
+      .get("http://127.0.0.1:3333/tasks")
+      .then(response => {
+        setTasks({
+          completed: response.data.completed,
+          canceled: response.data.canceled,
+          pending: response.data.pending
+        });
+      })
+      .catch(_error => {
+        alert("Houve um erro no servidor");
+      });
+  }
+
+  useEffect(() => {
+    if (tasks.canceled.length === 5) {
+      alert("Procrastinou bastente em ! :)");
+    }
+  }, [tasks.canceled]);
+
+  // Executado assim que o componente é montao
+  useEffect(() => {
+    getTasks();
+  }, []);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    await axios
+      .post("http://127.0.0.1:3333/tasks", { description })
+      .then(() => {
+        alert("Cadastrado com sucesso");
+        getTasks();
+      })
+      .catch(() => {
+        alert("Erro ao cadastrar");
+      });
+  }
 
   return (
     <>
       <Header />
       <Content>
-        <Form onSubmit={() => alert("submeter")}>
+        <Form onSubmit={handleSubmit}>
           <input
             type="text"
             placeholder="Digite a tarefa"
-            value={task}
-            onChange={e => setTask(e.target.value)}
+            value={description}
+            onChange={e => setDescription(e.target.value)}
           />
 
           <Button type="submit" text="Enviar" />
         </Form>
 
-        <Section
-          title="Pendentes"
-          data={[
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null
-            }
-          ]}
-        />
+        <Section title="Pendentes" data={tasks.pending} action={getTasks} />
 
-        <Section
-          title="Concluídos"
-          data={[
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null
-            }
-          ]}
-        />
+        <Section title="Concluídos" data={tasks.completed} refresh={getTasks} />
 
-        <Section
-          title="Cancelados"
-          data={[
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null
-            },
-            {
-              id: 2,
-              description: "Estudar react",
-              status: null
-            },
-            {
-              id: 3,
-              description: "Estudar react",
-              status: null
-            },
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 2,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 2,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 2,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 2,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 2,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 2,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 1,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            },
-            {
-              id: 2,
-              description: "Estudar react",
-              status: null,
-              date: new Date()
-            }
-          ]}
-        />
+        <Section title="Cancelados" data={tasks.canceled} refresh={getTasks} />
       </Content>
     </>
   );
